@@ -6,6 +6,11 @@ from sklearn.model_selection import train_test_split
 from catboost import CatBoostClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix
 
+st.set_page_config(
+    page_title="Нагель.АМ-2023-ФГИиИБ-ПИ-1б_вариант16_LeagueOfLegends",
+    layout="wide"
+)
+
 #@st.cache_data
 def load_data():
     return pd.read_csv('temp.csv')
@@ -22,10 +27,7 @@ def train_model(df):
     cm = confusion_matrix(y_test, y_pred)
     return model, accuracy, cm
 
-st.set_page_config(
-    page_title="Нагель.АМ-2023-ФГИиИБ-ПИ-1б_вариант16_LeagueOfLegends",
-    layout="wide"
-)
+
 
 st.title("Анализ побед в League of Legends")
 st.subheader("Нагель Аркадий ПИ-1б Вариант 16")
