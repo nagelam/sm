@@ -1,28 +1,10 @@
-import subprocess
-import sys
-
-required_libraries = [
-    'streamlit',
-    'pandas',
-    'matplotlib',
-    'seaborn',
-    'scikit-learn',
-    'catboost'
-]
-
-def install_package(package):
-    try:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", package])
-        print(f"Успешно установлена библиотека: {package}")
-    except subprocess.CalledProcessError:
-        print(f"Ошибка при установке библиотеки: {package}")
-
-for lib in required_libraries:
-    try:
-        __import__(lib)
-    except ImportError:
-        print(f"Библиотека {lib} не найдена, начинаю установку...")
-        install_package(lib)
+import streamlit as st
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.model_selection import train_test_split
+from catboost import CatBoostClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix
 
 #@st.cache_data
 def load_data():
