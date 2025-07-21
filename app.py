@@ -28,7 +28,7 @@ for lib in required_libraries:
 def load_data():
     return pd.read_csv('temp.csv')
 
-@st.cache_resource
+#@st.cache_resource
 def train_model(df):
     X = df.drop(['gameId', 'blueWins'], axis=1)
     y = df['blueWins']
