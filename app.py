@@ -24,7 +24,7 @@ for lib in required_libraries:
         print(f"Библиотека {lib} не найдена, начинаю установку...")
         install_package(lib)
 
-@st.cache_data
+#@st.cache_data
 def load_data():
     return pd.read_csv('temp.csv')
 
