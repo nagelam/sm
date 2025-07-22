@@ -6,6 +6,8 @@ try:
     from sklearn.model_selection import train_test_split
     from catboost import CatBoostClassifier
     from sklearn.metrics import accuracy_score, confusion_matrix
+    import warnings
+    warnings.filterwarnings('ignore')
     
     # Проверка версий библиотек
     st.write("Версии библиотек:")
