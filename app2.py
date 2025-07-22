@@ -69,7 +69,7 @@ try:
             with col1:
                 st.header("Распределение целевой переменной")
                 try:
-                    fig1, ax1 = plt.subplots(figsize=(1, 0.5))
+                    fig1, ax1 = plt.subplots(figsize=(0.5, 0.5))
                     df['blueWins'].value_counts().plot.pie(
                         autopct='%1.1f%%',
                         labels=['Поражение', 'Победа'],
