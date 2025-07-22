@@ -21,7 +21,7 @@ st.set_page_config(
 @st.cache_data(show_spinner=False)
 def load_data() -> pd.DataFrame:
     try:
-        return pd.read_csv("temp.csv")
+        return pd.read_csv("./temp.csv")
     except Exception as e:
         st.error(f"Не удалось загрузить temp.csv: {e}")
         return pd.DataFrame()
