@@ -8,7 +8,7 @@ from sklearn.metrics import accuracy_score, confusion_matrix
 import warnings
 warnings.filterwarnings("ignore")
 import os
-print(os.listdir())
+st.write(os.listdir())
 
 # ───────────────────────  НАСТРОЙКИ СТРАНИЦЫ  ───────────────────────
 st.set_page_config(
