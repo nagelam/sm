@@ -9,11 +9,6 @@ try:
     import warnings
     warnings.filterwarnings('ignore')
     
-    # Проверка версий библиотек
-    st.write("Версии библиотек:")
-    st.write(f"- Streamlit: {st.__version__}")
-    st.write(f"- Pandas: {pd.__version__}")
-    
     # Конфигурация страницы ДО любого другого вызова st
     st.set_page_config(
         page_title="Нагель.АМ-2023-ФГИиИБ-ПИ-1б_вариант16_LeagueOfLegends",
