@@ -90,7 +90,7 @@ try:
             with col2:
                 st.header("Корреляция с победой")
                 try:
-                    st.image('2_3_2.png', use_column_width=True)
+                    st.image('2_3_2.png', use_container_width=True=True)
                     st.write("Тут мы видим важность признаков. Наши добавленные признаки хорошо коррелируют с таргетом")
                 except Exception as e:
                     st.error(f"Ошибка загрузки изображения: {str(e)}")
