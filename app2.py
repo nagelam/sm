@@ -69,7 +69,7 @@ try:
             with col1:
                 st.header("Распределение целевой переменной")
                 try:
-                    fig1, ax1 = plt.subplots(figsize=(6, 4))
+                    fig1, ax1 = plt.subplots(figsize=(3, 2))
                     df['blueWins'].value_counts().plot.pie(
                         autopct='%1.1f%%',
                         labels=['Поражение', 'Победа'],
@@ -97,7 +97,7 @@ try:
                 with col1:
                     st.header("Матрица ошибок")
                     try:
-                        fig3, ax3 = plt.subplots(figsize=(6, 4))
+                        fig3, ax3 = plt.subplots(figsize=(3, 2))
                         sns.heatmap(
                             cm, 
                             annot=True, 
