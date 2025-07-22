@@ -74,7 +74,8 @@ try:
                         autopct='%1.1f%%',
                         labels=['Поражение', 'Победа'],
                         colors=['#ff9999','#66b3ff'],
-                        ax=ax1
+                        ax=ax1,textprops={'fontsize': 4},  
+                        pctdistance=0.8
                     )
                     plt.ylabel('')
                     st.pyplot(fig1)
