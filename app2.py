@@ -106,7 +106,8 @@ try:
                             cmap='Blues',
                             xticklabels=['Поражение', 'Победа'],
                             yticklabels=['Поражение', 'Победа'],
-                            ax=ax3
+                            ax=ax3,textprops={'fontsize': 4},  # Еще меньше шрифт
+                            pctdistance=0.8
                         )
                         plt.xlabel('Предсказание')
                         plt.ylabel('Реальность')
