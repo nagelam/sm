@@ -69,7 +69,7 @@ try:
             with col1:
                 st.header("Распределение целевой переменной")
                 try:
-                    fig1, ax1 = plt.subplots(figsize=(3, 2))
+                    fig1, ax1 = plt.subplots(figsize=(1, 0.5))
                     df['blueWins'].value_counts().plot.pie(
                         autopct='%1.1f%%',
                         labels=['Поражение', 'Победа'],
@@ -85,7 +85,7 @@ try:
             with col2:
                 st.header("Корреляция с победой")
                 try:
-                    st.image('2_3_2.png', use_container_width=True)
+                    st.image('2_3_2.png', width=300)
                     st.write("Тут мы видим важность признаков. Наши добавленные признаки хорошо коррелируют с таргетом")
                 except Exception as e:
                     st.error(f"Ошибка загрузки изображения: {str(e)}")
@@ -97,7 +97,7 @@ try:
                 with col1:
                     st.header("Матрица ошибок")
                     try:
-                        fig3, ax3 = plt.subplots(figsize=(3, 2))
+                        fig3, ax3 = plt.subplots(figsize=(1, 0.5))
                         sns.heatmap(
                             cm, 
                             annot=True, 
