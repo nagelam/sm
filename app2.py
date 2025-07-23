@@ -3,327 +3,305 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 from catboost import CatBoostClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-import seaborn as sns
-import matplotlib.pyplot as plt
+import plotly.figure_factory as ff
 
 # Настройка страницы
 st.set_page_config(
-    page_title="Иванов_ПИ19-1_Вариант1_League_of_Legends",
-    page_icon="🎮",
+    page_title="Нагель_Аркадий_Михайлович_16_вариант_League_of_Legends_Dataset",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 # Заголовок
-st.title("🎮 Иванов_ПИ19-1_Вариант1_League_of_Legends")
-st.markdown("### Интерактивный анализ данных League of Legends с CatBoost")
+st.title("Нагель_Аркадий_Михайлович_16_вариант_League_of_Legends_Dataset")
 
-# Загрузка данных
+# Описание набора данных
+st.markdown("""
+### Описание набора данных League of Legends
+
+Данный набор данных содержит статистику матчей популярной игры League of Legends, где две команды (синяя и красная) 
+сражаются за победу. Каждая запись представляет один матч и включает множественные игровые метрики:
+- **Основные показатели**: убийства, смерти, помощи, золото, опыт
+- **Объективы**: драконы, бароны, башни, ингибиторы  
+- **Стратегические элементы**: первая кровь, вижн-контроль, урон
+- **Целевая переменная**: победа синей команды (blueWins: 1 = победа синих, 0 = победа красных)
+
+Модель CatBoost используется для предсказания исхода матча на основе игровых характеристик.
+""")
+
+# Функция для создания синтетических данных на основе образца
 @st.cache_data
-def load_data():
-    """Загрузка и предобработка данных"""
-    # В реальном проекте здесь будет загрузка вашего CSV файла
+def create_sample_data():
     np.random.seed(42)
     n_samples = 1000
     
-    # Генерируем реалистичные данные на основе предоставленного образца
-    game_duration = np.random.normal(1500, 400, n_samples).astype(int)
-    game_duration = np.clip(game_duration, 300, 3000)
-    
-    blue_wins = np.random.binomial(1, 0.5, n_samples)
-    blue_kills = np.random.poisson(20 + 10 * blue_wins, n_samples)
-    blue_deaths = np.random.poisson(20 + 5 * (1 - blue_wins), n_samples)
-    blue_assists = np.random.poisson(30 + 15 * blue_wins, n_samples)
-    blue_total_gold = np.random.normal(50000 + game_duration * 20 + blue_wins * 10000, 15000, n_samples).astype(int)
-    blue_total_gold = np.clip(blue_total_gold, 10000, 150000)
-    blue_champion_damage = np.random.normal(blue_total_gold * 1.2 + blue_wins * 20000, 20000, n_samples).astype(int)
-    blue_champion_damage = np.clip(blue_champion_damage, 10000, 200000)
-    
-    red_wins = 1 - blue_wins
-    red_kills = np.random.poisson(20 + 10 * red_wins, n_samples)
-    red_deaths = np.random.poisson(20 + 5 * (1 - red_wins), n_samples)
-    red_assists = np.random.poisson(30 + 15 * red_wins, n_samples)
-    red_total_gold = np.random.normal(50000 + game_duration * 20 + red_wins * 10000, 15000, n_samples).astype(int)
-    red_total_gold = np.clip(red_total_gold, 10000, 150000)
-    red_champion_damage = np.random.normal(red_total_gold * 1.2 + red_wins * 20000, 20000, n_samples).astype(int)
-    red_champion_damage = np.clip(red_champion_damage, 10000, 200000)
-    
+    # Создаем данные на основе реальных паттернов из примера
     data = {
-        'gameId': np.arange(1000000, 1000000 + n_samples),
-        'gameDuration': game_duration,
-        'blueWins': blue_wins,
-        'blueKills': blue_kills,
-        'blueDeaths': blue_deaths,
-        'blueAssists': blue_assists,
-        'blueTotalGold': blue_total_gold,
-        'blueChampionDamageDealt': blue_champion_damage,
-        'redKills': red_kills,
-        'redDeaths': red_deaths,
-        'redAssists': red_assists,
-        'redTotalGold': red_total_gold,
-        'redChampionDamageDealt': red_champion_damage
+        'gameId': [np.random.randint(1000000000, 9999999999) for _ in range(n_samples)],
+        'gameDuration': np.random.normal(1500, 400, n_samples).astype(int),
+        'blueWins': np.random.choice([0, 1], n_samples, p=[0.49, 0.51]),  # Blue side advantage
+        'blueFirstBlood': np.random.choice([0, 1], n_samples, p=[0.5, 0.5]),
+        'blueFirstTower': np.random.choice([0, 1], n_samples, p=[0.48, 0.52]),
+        'blueFirstDragon': np.random.choice([0, 1], n_samples, p=[0.5, 0.5]),
+        'blueDragonKills': np.random.poisson(2.5, n_samples),
+        'blueBaronKills': np.random.poisson(1.2, n_samples),
+        'blueTowerKills': np.random.poisson(6, n_samples),
+        'blueKills': np.random.poisson(25, n_samples),
+        'blueDeath': np.random.poisson(24, n_samples),
+        'blueAssist': np.random.poisson(35, n_samples),
+        'blueTotalGold': np.random.normal(55000, 15000, n_samples).astype(int),
+        'blueTotalMinionKills': np.random.normal(600, 150, n_samples).astype(int),
+        'blueAvgLevel': np.random.normal(13, 2, n_samples),
+        'blueWardPlaced': np.random.poisson(60, n_samples),
+        'blueChampionDamageDealt': np.random.normal(70000, 20000, n_samples).astype(int),
+        
+        'redFirstBlood': np.random.choice([0, 1], n_samples, p=[0.5, 0.5]),
+        'redFirstTower': np.random.choice([0, 1], n_samples, p=[0.52, 0.48]),
+        'redFirstDragon': np.random.choice([0, 1], n_samples, p=[0.5, 0.5]),
+        'redDragonKills': np.random.poisson(2.3, n_samples),
+        'redBaronKills': np.random.poisson(1.1, n_samples),
+        'redTowerKills': np.random.poisson(5.8, n_samples),
+        'redKills': np.random.poisson(24, n_samples),
+        'redDeath': np.random.poisson(25, n_samples),
+        'redAssist': np.random.poisson(34, n_samples),
+        'redTotalGold': np.random.normal(53000, 15000, n_samples).astype(int),
+        'redTotalMinionKills': np.random.normal(590, 150, n_samples).astype(int),
+        'redAvgLevel': np.random.normal(12.8, 2, n_samples),
+        'redWardPlaced': np.random.poisson(58, n_samples),
+        'redChampionDamageDealt': np.random.normal(68000, 20000, n_samples).astype(int),
     }
     
-    return pd.DataFrame(data)
-
-# Обучение модели CatBoost
-@st.cache_resource
-def train_catboost_model(df):
-    """Обучение модели CatBoost для предсказания исходов матчей"""
-    # Подготовка признаков
-    features = ['gameDuration', 'blueKills', 'blueDeaths', 'blueAssists', 
-               'blueTotalGold', 'blueChampionDamageDealt', 'redKills', 
-               'redDeaths', 'redAssists', 'redTotalGold', 'redChampionDamageDealt']
+    df = pd.DataFrame(data)
     
-    X = df[features]
+    # Добавляем корреляции между победой и ключевыми метриками
+    for i in range(len(df)):
+        if df.loc[i, 'blueWins'] == 1:
+            # Если синие выиграли, корректируем их статистику в положительную сторону
+            df.loc[i, 'blueKills'] += np.random.randint(0, 10)
+            df.loc[i, 'blueTotalGold'] += np.random.randint(0, 8000)
+            df.loc[i, 'blueTowerKills'] += np.random.randint(0, 3)
+            df.loc[i, 'redDeath'] += np.random.randint(0, 8)
+        else:
+            # Если красные выиграли
+            df.loc[i, 'redKills'] += np.random.randint(0, 10)
+            df.loc[i, 'redTotalGold'] += np.random.randint(0, 8000)
+            df.loc[i, 'redTowerKills'] += np.random.randint(0, 3)
+            df.loc[i, 'blueDeath'] += np.random.randint(0, 8)
+    
+    return df
+
+# Подготовка данных и обучение модели
+@st.cache_resource
+def train_model():
+    df = create_sample_data()
+    
+    # Выбираем ключевые признаки для модели
+    feature_columns = [
+        'blueFirstBlood', 'blueFirstTower', 'blueFirstDragon',
+        'blueDragonKills', 'blueBaronKills', 'blueTowerKills',
+        'blueKills', 'blueDeath', 'blueAssist', 'blueTotalGold',
+        'blueTotalMinionKills', 'blueAvgLevel', 'blueWardPlaced',
+        'blueChampionDamageDealt',
+        'redFirstBlood', 'redFirstTower', 'redFirstDragon',
+        'redDragonKills', 'redBaronKills', 'redTowerKills',
+        'redKills', 'redDeath', 'redAssist', 'redTotalGold',
+        'redTotalMinionKills', 'redAvgLevel', 'redWardPlaced',
+        'redChampionDamageDealt'
+    ]
+    
+    X = df[feature_columns]
     y = df['blueWins']
     
-    # Разделение данных
+    # Разделение на обучающую и тестовую выборки
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     
-    # Обучение модели
+    # Обучение модели CatBoost
     model = CatBoostClassifier(
-        iterations=100,
-        depth=6,
+        iterations=500,
         learning_rate=0.1,
-        loss_function='Logloss',
-        verbose=False,
+        depth=6,
+        verbose=0,
         random_seed=42
     )
     
     model.fit(X_train, y_train)
     
-    # Предсказания и метрики
+    # Предсказания
     y_pred = model.predict(X_test)
+    y_pred_proba = model.predict_proba(X_test)
+    
+    # Метрики
     accuracy = accuracy_score(y_test, y_pred)
     
-    return model, accuracy, X_test, y_test, y_pred, features
-
-# Загрузка данных и обучение модели
-df = load_data()
-model, accuracy, X_test, y_test, y_pred, features = train_catboost_model(df)
-
-# Краткое описание набора данных
-st.markdown("""
-**Описание набора данных:**
-Данные содержат информацию о 1000 матчах League of Legends с детальной статистикой для синей и красной команд. 
-Включают ключевые игровые метрики: убийства, смерти, помощи, золото, урон и продолжительность игры, 
-которые используются для предсказания победителя матча.
-""")
-
-# Боковая панель с фильтрами
-st.sidebar.header("🎛️ Интерактивные фильтры")
-
-# Фильтр по продолжительности игры
-duration_range = st.sidebar.slider(
-    "Продолжительность игры (минуты)",
-    min_value=int(df['gameDuration'].min()),
-    max_value=int(df['gameDuration'].max()),
-    value=(int(df['gameDuration'].min()), int(df['gameDuration'].max())),
-    step=50
-)
-
-# Фильтр по команде-победителю
-team_filter = st.sidebar.multiselect(
-    "Команда-победитель",
-    options=['Синяя команда', 'Красная команда'],
-    default=['Синяя команда', 'Красная команда']
-)
-
-# Применение фильтров
-filtered_df = df[
-    (df['gameDuration'] >= duration_range[0]) & 
-    (df['gameDuration'] <= duration_range[1])
-]
-
-if 'Синяя команда' not in team_filter:
-    filtered_df = filtered_df[filtered_df['blueWins'] == 0]
-elif 'Красная команда' not in team_filter:
-    filtered_df = filtered_df[filtered_df['blueWins'] == 1]
-
-# Основной контент
-col1, col2 = st.columns([2, 1])
-
-with col2:
-    # Метрики модели
-    st.subheader("📊 Точность модели CatBoost")
-    st.metric("Точность", f"{accuracy:.3f}", f"{(accuracy-0.5)*100:+.1f}%")
-    
-    # Баланс классов
-    st.subheader("⚖️ Баланс классов")
-    class_counts = filtered_df['blueWins'].value_counts()
-    fig_pie = px.pie(
-        values=class_counts.values,
-        names=['Красная команда', 'Синяя команда'],
-        title="Распределение побед",
-        color_discrete_sequence=px.colors.qualitative.Set3
-    )
-    fig_pie.update_layout(height=300, showlegend=True)
-    st.plotly_chart(fig_pie, use_container_width=True)
-
-with col1:
-    # График 1: Зависимость признаков между собой
-    st.subheader("🔗 Зависимость признаков")
-    
-    # Выбор признаков для сравнения
-    feature_options = ['blueKills', 'blueDeaths', 'blueAssists', 'blueTotalGold', 
-                      'blueChampionDamageDealt', 'redKills', 'redDeaths', 'redAssists', 
-                      'redTotalGold', 'redChampionDamageDealt', 'gameDuration']
-    
-    x_feature = st.selectbox("Признак по оси X:", feature_options, index=0)
-    y_feature = st.selectbox("Признак по оси Y:", feature_options, index=4)
-    
-    fig_scatter = px.scatter(
-        filtered_df,
-        x=x_feature,
-        y=y_feature,
-        color='blueWins',
-        color_discrete_map={0: 'red', 1: 'blue'},
-        title=f"Зависимость {y_feature} от {x_feature}",
-        labels={'blueWins': 'Победитель', 0: 'Красная команда', 1: 'Синяя команда'},
-        hover_data=['gameDuration']
-    )
-    fig_scatter.update_layout(height=400)
-    st.plotly_chart(fig_scatter, use_container_width=True)
-
-# Вторая строка графиков
-col3, col4 = st.columns(2)
-
-with col3:
-    # График 2: Зависимость признаков от таргета
-    st.subheader("🎯 Анализ признаков по командам")
-    
-    selected_feature = st.selectbox(
-        "Выберите признак для анализа:",
-        feature_options,
-        index=3
-    )
-    
-    fig_box = px.box(
-        filtered_df,
-        x='blueWins',
-        y=selected_feature,
-        color='blueWins',
-        color_discrete_map={0: 'red', 1: 'blue'},
-        title=f"Распределение {selected_feature} по командам",
-        labels={'blueWins': 'Команда-победитель'}
-    )
-    fig_box.update_xaxes(ticktext=['Красная команда', 'Синяя команда'], tickvals=[0, 1])
-    fig_box.update_layout(height=400, showlegend=False)
-    st.plotly_chart(fig_box, use_container_width=True)
-
-with col4:
-    # График 3: Результаты модели - важность признаков
-    st.subheader("🤖 Важность признаков (CatBoost)")
-    
+    # Важность признаков
     feature_importance = model.get_feature_importance()
+    feature_names = X.columns.tolist()
+    
+    return model, accuracy, y_test, y_pred, y_pred_proba, feature_importance, feature_names, df
+
+# Загрузка модели и данных
+model, accuracy, y_test, y_pred, y_pred_proba, feature_importance, feature_names, df = train_model()
+
+# Многоколоночный макет для размещения графиков
+col1, col2, col3 = st.columns([1, 1, 1])
+
+# График 1: Результаты обучения модели (Confusion Matrix)
+with col1:
+    st.subheader("📊 Матрица ошибок модели")
+    
+    cm = confusion_matrix(y_test, y_pred)
+    
+    fig_cm = ff.create_annotated_heatmap(
+        z=cm,
+        x=['Красные выиграли', 'Синие выиграли'],
+        y=['Красные выиграли', 'Синие выиграли'],
+        colorscale='Blues',
+        showscale=True
+    )
+    
+    fig_cm.update_layout(
+        title='Матрица ошибок',
+        xaxis_title='Предсказанные значения',
+        yaxis_title='Фактические значения',
+        height=350,
+        font=dict(size=10)
+    )
+    
+    st.plotly_chart(fig_cm, use_container_width=True)
+    
+    # Точность модели
+    st.metric("🎯 Точность модели", f"{accuracy:.3f}", f"{(accuracy-0.5)*100:+.1f}% от случайности")
+
+# График 2: Важность признаков
+with col2:
+    st.subheader("🔍 Важность признаков")
+    
+    # Топ-10 наиболее важных признаков
     importance_df = pd.DataFrame({
-        'Feature': features,
-        'Importance': feature_importance
-    }).sort_values('Importance', ascending=True)
+        'feature': feature_names,
+        'importance': feature_importance
+    }).sort_values('importance', ascending=True).tail(10)
     
     fig_importance = px.bar(
         importance_df,
-        x='Importance',
-        y='Feature',
+        x='importance',
+        y='feature',
         orientation='h',
-        title="Важность признаков в модели",
-        color='Importance',
+        title='Топ-10 важных признаков',
+        color='importance',
         color_continuous_scale='viridis'
     )
-    fig_importance.update_layout(height=400, showlegend=False)
+    
+    fig_importance.update_layout(
+        height=350,
+        font=dict(size=10),
+        showlegend=False
+    )
+    
     st.plotly_chart(fig_importance, use_container_width=True)
 
-# Дополнительные интерактивные графики
-st.subheader("📈 Дополнительный анализ")
+# График 3: Анализ игровых статистик
+with col3:
+    st.subheader("⚔️ Сравнение команд")
+    
+    # Средние значения ключевых метрик для побед каждой команды
+    blue_wins = df[df['blueWins'] == 1]
+    red_wins = df[df['blueWins'] == 0]
+    
+    metrics = ['Kills', 'TotalGold', 'TowerKills', 'DragonKills']
+    blue_metrics = [
+        blue_wins['blueKills'].mean(),
+        blue_wins['blueTotalGold'].mean(),
+        blue_wins['blueTowerKills'].mean(),
+        blue_wins['blueDragonKills'].mean()
+    ]
+    red_metrics = [
+        red_wins['redKills'].mean(),
+        red_wins['redTotalGold'].mean(),
+        red_wins['redTowerKills'].mean(),
+        red_wins['redDragonKills'].mean()
+    ]
+    
+    fig_comparison = go.Figure()
+    
+    fig_comparison.add_trace(go.Scatterpolar(
+        r=blue_metrics,
+        theta=metrics,
+        fill='toself',
+        name='Синяя команда',
+        line_color='blue'
+    ))
+    
+    fig_comparison.add_trace(go.Scatterpolar(
+        r=red_metrics,
+        theta=metrics,
+        fill='toself',
+        name='Красная команда',
+        line_color='red'
+    ))
+    
+    fig_comparison.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                range=[0, max(max(blue_metrics), max(red_metrics)) * 1.1]
+            )),
+        showlegend=True,
+        title='Средние показатели при победе',
+        height=350,
+        font=dict(size=10)
+    )
+    
+    st.plotly_chart(fig_comparison, use_container_width=True)
 
-col5, col6 = st.columns(2)
+# Дополнительная информация в нижней части
+st.markdown("---")
+
+col4, col5 = st.columns([1, 1])
+
+with col4:
+    st.subheader("📈 Метрики модели")
+    
+    # Вероятности предсказаний
+    prob_df = pd.DataFrame({
+        'Вероятность победы синих': y_pred_proba[:, 1],
+        'Фактический результат': y_test.values
+    })
+    
+    fig_prob = px.histogram(
+        prob_df,
+        x='Вероятность победы синих',
+        color='Фактический результат',
+        nbins=20,
+        title='Распределение вероятностей',
+        color_discrete_map={0: 'red', 1: 'blue'}
+    )
+    
+    fig_prob.update_layout(height=300)
+    st.plotly_chart(fig_prob, use_container_width=True)
 
 with col5:
-    # Корреляционная матрица
-    st.subheader("🔥 Тепловая карта корреляций")
+    st.subheader("🎮 Ключевые инсайты")
     
-    numeric_features = ['gameDuration', 'blueKills', 'blueDeaths', 'blueAssists', 
-                       'blueTotalGold', 'blueChampionDamageDealt', 'blueWins']
-    corr_matrix = filtered_df[numeric_features].corr()
+    st.markdown(f"""
+    **Производительность модели CatBoost:**
+    - Точность: **{accuracy:.1%}**
+    - Размер датасета: **{len(df):,} игр**
+    - Количество признаков: **{len(feature_names)}**
     
-    fig_heatmap = px.imshow(
-        corr_matrix,
-        text_auto=True,
-        aspect="auto",
-        title="Корреляционная матрица признаков",
-        color_continuous_scale='RdBu_r'
-    )
-    fig_heatmap.update_layout(height=400)
-    st.plotly_chart(fig_heatmap, use_container_width=True)
-
-with col6:
-    # Гистограмма продолжительности игр
-    st.subheader("⏱️ Распределение времени игр")
+    **Топ-3 важных фактора победы:**
+    1. {feature_names[np.argsort(feature_importance)[-1]]}
+    2. {feature_names[np.argsort(feature_importance)[-2]]} 
+    3. {feature_names[np.argsort(feature_importance)[-3]]}
     
-    fig_hist = px.histogram(
-        filtered_df,
-        x='gameDuration',
-        color='blueWins',
-        color_discrete_map={0: 'red', 1: 'blue'},
-        title="Распределение продолжительности игр",
-        labels={'blueWins': 'Победитель'},
-        nbins=30,
-        opacity=0.7
-    )
-    fig_hist.update_layout(height=400, barmode='overlay')
-    st.plotly_chart(fig_hist, use_container_width=True)
-
-# Интерактивная таблица с данными
-st.subheader("📋 Данные матчей")
-st.dataframe(
-    filtered_df.head(100),
-    use_container_width=True,
-    height=300
-)
-
-# Статистика
-col7, col8, col9, col10 = st.columns(4)
-
-with col7:
-    st.metric(
-        "Всего матчей",
-        len(filtered_df),
-        delta=f"{len(filtered_df) - len(df)} от общего"
-    )
-
-with col8:
-    avg_duration = filtered_df['gameDuration'].mean()
-    st.metric(
-        "Средняя длительность",
-        f"{avg_duration:.0f} мин",
-        delta=f"{avg_duration - df['gameDuration'].mean():.0f} мин"
-    )
-
-with col9:
-    blue_win_rate = filtered_df['blueWins'].mean()
-    st.metric(
-        "Процент побед синей команды",
-        f"{blue_win_rate:.1%}",
-        delta=f"{(blue_win_rate - 0.5)*100:+.1f}%"
-    )
-
-with col10:
-    avg_kills = (filtered_df['blueKills'] + filtered_df['redKills']).mean()
-    st.metric(
-        "Среднее убийств за игру",
-        f"{avg_kills:.1f}",
-        delta=f"{avg_kills - 40:.1f}"
-    )
+    **Баланс команд:**
+    - Побед синих: {(df['blueWins'] == 1).sum()} ({(df['blueWins'] == 1).mean():.1%})
+    - Побед красных: {(df['blueWins'] == 0).sum()} ({(df['blueWins'] == 0).mean():.1%})
+    """)
 
 # Подвал
 st.markdown("---")
-st.markdown("""
-**Технологии:** Streamlit, Plotly, CatBoost, Pandas, NumPy  
-**Автор:** Иванов И.И., группа ПИ19-1, вариант 1  
-**Набор данных:** League of Legends Match Outcomes
-""") сделай такиеже графики но на несколько страниц так чтобы графики не были последовательны чтобы умещался дашборд без прокрути вниз
+st.markdown("*Дашборд создан с использованием Streamlit, CatBoost и Plotly для анализа данных League of Legends*")
