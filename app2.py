@@ -131,9 +131,9 @@ def page_model_interpret():
     st.pyplot(fig)
     
     # Бар важности признаков (без изменений)
-    fig_shap = px.bar(x=model.feature_importances_, y=features, orientation='h', title="Важность Признаков")
-    fig_shap.update_layout(height=300, width=400)
-    st.plotly_chart(fig_shap, use_container_width=True)
+    shap.summary_plot(shap_values, X_test, show=False,plot_type='bar)
+    plt.tight_layout()
+    st.pyplot(fig)
 
 # Навигация
 pages = {
