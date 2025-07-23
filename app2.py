@@ -5,6 +5,7 @@ import catboost as cb
 import shap
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
+import matplotlib.pyplot as plt
 
 # Заголовок (замените на ваши данные)
 FIO = "Нагель Аркадий Михайлович"
