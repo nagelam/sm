@@ -32,22 +32,7 @@ st.markdown("""
 def load_data(n_samples: int = 1000) -> pd.DataFrame:
     """Создание псевдореалистичного датасета (пример)."""
     rng = np.random.default_rng(42)
-    df = pd.DataFrame({
-        'gameId': rng.integers(1e9, 1e10, n_samples),
-        'blueWins': rng.integers(0, 2, n_samples),
-        'blueKills': rng.poisson(25, n_samples),
-        'blueDeaths': rng.poisson(24, n_samples),
-        'blueAssists': rng.poisson(35, n_samples),
-        'blueTotalGold': rng.normal(55_000, 15_000, n_samples).astype(int),
-        'blueTowerKills': rng.poisson(6, n_samples),
-        'blueDragonKills': rng.poisson(2, n_samples),
-        'redKills': rng.poisson(24, n_samples),
-        'redDeaths': rng.poisson(25, n_samples),
-        'redAssists': rng.poisson(34, n_samples),
-        'redTotalGold': rng.normal(53_000, 15_000, n_samples).astype(int),
-        'redTowerKills': rng.poisson(6, n_samples),
-        'redDragonKills': rng.poisson(2, n_samples),
-    })
+    df = pd.read_csv("./temp.csv")
     # Корректировка показателей победившей стороны
     win_mask = df["blueWins"] == 1
     adjust = lambda col, delta: df.loc[win_mask, col] + delta
