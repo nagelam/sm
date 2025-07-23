@@ -122,7 +122,6 @@ def page_model_interpret():
     #fig, ax = plt.subplots()
 
     # Perform your plotting actions on the axes object
-    ax.plot([1, 2, 3], [4, 5, 6])
     st.title("Интерпретация Модели")
     # График SHAP для интерпретации результатов обучения
     st.write("SHAP-значения для тестовых данных (влияние признаков на предсказания).")
