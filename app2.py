@@ -119,7 +119,7 @@ def page_distributions():
         st.plotly_chart(fig_hist2, use_container_width=True)
 
 def page_model_interpret():
-    fig, ax = plt.subplots()
+    #fig, ax = plt.subplots()
 
     # Perform your plotting actions on the axes object
     ax.plot([1, 2, 3], [4, 5, 6])
