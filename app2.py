@@ -1,126 +1,115 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 import plotly.express as px
-import plotly.graph_objects as go
-from catboost import CatBoostClassifier
+import catboost as cb
+import shap
 from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score, confusion_matrix
-import plotly.figure_factory as ff
+from sklearn.metrics import accuracy_score
 
-# -------------------------------------------------
-# НАСТРОЙКА СТРАНИЦЫ
-# -------------------------------------------------
-st.set_page_config(
-    page_title="Нагель_Аркадий_Михайлович_16_League_of_Legends",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
+# Заголовок (замените на ваши данные)
+FIO = "Your_FIO"
+GROUP = "Your_Group"
+VARIANT = "Your_Variant_Number"
+DATASET_NAME = "LoL_Matches"
+st.set_page_config(page_title=f"{FIO}_{GROUP}_{VARIANT}_{DATASET_NAME}")
 
-st.title("Нагель_Аркадий_Михайлович_16_League_of_Legends_Dataset")
-
-st.markdown("""
-**Набор данных** содержит пост-игровую статистику матчей League of Legends.  
-*Цель* – предсказать победу синей команды (`blueWins`).  
-Алгоритм **CatBoost** обучен на 30 признаках, включая убийства, золото, уничтоженные башни и т.д.
-""")
-
-# -------------------------------------------------
-# ФУНКЦИИ ДЛЯ ДАННЫХ И МОДЕЛИ
-# -------------------------------------------------
+# Загрузка данных
 @st.cache_data
-def load_data(n_samples: int = 1000) -> pd.DataFrame:
-    """Создание псевдореалистичного датасета (пример)."""
-    rng = np.random.default_rng(42)
+def load_data():
     df = pd.read_csv("./temp.csv")
-    # Корректировка показателей победившей стороны
-    win_mask = df["blueWins"] == 1
-    adjust = lambda col, delta: df.loc[win_mask, col] + delta
-    df.loc[win_mask, "blueKills"] = adjust("blueKills", rng.integers(3, 8, win_mask.sum()))
-    df.loc[~win_mask, "redKills"] += rng.integers(3, 8, (~win_mask).sum())
     return df
 
+df = load_data()
+
+# Подготовка данных для модели (пример: выбор ключевых признаков)
+features = ['blueKills', 'blueDeath', 'blueTotalGold', 'redKills', 'redDeath', 'redTotalGold',
+            'blueTowerKills', 'redTowerKills', 'blueDragonKills', 'redDragonKills']
+target = 'blueWins'
+X = df[features]
+y = df[target]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+# Обучение модели CatBoost
 @st.cache_resource
-def train_catboost(df: pd.DataFrame):
-    features = [
-        'blueKills', 'blueDeaths', 'blueAssists', 'blueTotalGold',
-        'blueTowerKills', 'blueDragonKills',
-        'redKills', 'redDeaths', 'redAssists', 'redTotalGold',
-        'redTowerKills', 'redDragonKills'
-    ]
-    X_train, X_test, y_train, y_test = train_test_split(
-        df[features], df['blueWins'], test_size=0.2, random_state=42
-    )
-    model = CatBoostClassifier(iterations=400, depth=6, learning_rate=0.1,
-                               verbose=False, random_seed=42)
+def train_model():
+    model = cb.CatBoostClassifier(iterations=100, depth=6, learning_rate=0.1, verbose=0)
     model.fit(X_train, y_train)
     y_pred = model.predict(X_test)
-    acc = accuracy_score(y_test, y_pred)
-    cm = confusion_matrix(y_test, y_pred)
-    fi = model.get_feature_importance(prettified=True)
-    return model, acc, cm, fi, X_test, y_pred
+    accuracy = accuracy_score(y_test, y_pred)
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(X_test)
+    return model, accuracy, shap_values, X_test
 
-# Загрузка данных и обучение
-df = load_data()
-model, accuracy, conf_mat, feat_importance, X_test, y_pred = train_catboost(df)
+model, accuracy, shap_values, X_test = train_model()
 
-# -------------------------------------------------
-# МНОГОСТАНОЧНАЯ КОМПОНОВКА
-# -------------------------------------------------
-col1, col2, col3 = st.columns(3, gap="small")
+# Многостраничная навигация
+def page_home():
+    st.title("Главная: Описание и Точность Модели")
+    st.write(f"Точность модели CatBoost: {accuracy:.2%} (на тестовых данных).")
+    
+    # Визуализация точности (бар для accuracy)
+    fig_acc = px.bar(x=['Accuracy'], y=[accuracy], title="Точность Модели", labels={'y': 'Значение'}, range_y=[0,1])
+    fig_acc.update_layout(height=200, width=300, showlegend=False)
+    st.plotly_chart(fig_acc, use_container_width=True)
+    
+    st.write("Перейдите на другие страницы для графиков.")
 
-# ------- СТАНОК 1: ОЦЕНКА МОДЕЛИ -------
-with col1:
-    st.subheader("Матрица ошибок")
-    labels = ['Победа красных', 'Победа синих']
-    fig_cm = ff.create_annotated_heatmap(
-        z=conf_mat,
-        x=labels,
-        y=labels,
-        colorscale="Blues",
-        showscale=True
-    )
-    fig_cm.update_layout(margin=dict(t=30))
-    st.plotly_chart(fig_cm, use_container_width=True)
-    st.metric("Точность модели", f"{accuracy:.2%}")
+def page_features_deps():
+    st.title("Зависимости Признаков")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Интерактивный scatter: зависимость двух признаков
+        feat1 = st.selectbox("Признак X:", features, index=0)
+        feat2 = st.selectbox("Признак Y:", features, index=2)
+        fig_dep = px.scatter(df, x=feat1, y=feat2, color='blueWins', title=f"{feat1} vs {feat2}")
+        fig_dep.update_layout(height=300, width=400)
+        st.plotly_chart(fig_dep, use_container_width=True)
+    
+    with col2:
+        # Зависимость признака от таргета
+        feat_target = st.selectbox("Признак vs blueWins:", features, index=1)
+        fig_target = px.box(df, x='blueWins', y=feat_target, title=f"{feat_target} по blueWins")
+        fig_target.update_layout(height=300, width=400)
+        st.plotly_chart(fig_target, use_container_width=True)
 
-# ------- СТАНОК 2: ВАЖНОСТЬ ПРИЗНАКОВ -------
-with col2:
-    st.subheader("Важные признаки")
-    top_n = st.slider("Сколько признаков показать", 5, len(feat_importance), 10, key="slider_feat")
-    top_feats = feat_importance.nlargest(top_n, "Importances")
-    fig_feat = px.bar(
-        top_feats.sort_values("Importances"),
-        x="Importances", y="Feature", orientation="h",
-        color="Importances", color_continuous_scale="viridis"
-    )
-    fig_feat.update_layout(margin=dict(t=30))
-    st.plotly_chart(fig_feat, use_container_width=True)
+def page_distributions():
+    st.title("Распределения Признаков")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Интерактивная гистограмма распределения
+        feat_hist = st.selectbox("Признак для распределения:", features, index=3)
+        fig_hist = px.histogram(df, x=feat_hist, color='blueWins', title=f"Распределение {feat_hist}", marginal="box")
+        fig_hist.update_layout(height=300, width=400)
+        st.plotly_chart(fig_hist, use_container_width=True)
+    
+    with col2:
+        # Еще одна гистограмма для другого признака
+        feat_hist2 = st.selectbox("Второй признак для распределения:", features, index=4)
+        fig_hist2 = px.histogram(df, x=feat_hist2, color='blueWins', title=f"Распределение {feat_hist2}", marginal="box")
+        fig_hist2.update_layout(height=300, width=400)
+        st.plotly_chart(fig_hist2, use_container_width=True)
 
-# ------- СТАНОК 3: СРАВНЕНИЕ СТАТИСТИК -------
-with col3:
-    st.subheader("Сравнение команд")
-    metric = st.selectbox(
-        "Выберите метрику",
-        ["Kills", "TotalGold", "TowerKills", "DragonKills"],
-        key="metric_select"
-    )
-    blue_col = f"blue{metric}"
-    red_col = f"red{metric}"
-    bins = st.slider("Число корзин", 5, 30, 15, key="bins_slider")
-    hist_df = pd.melt(
-        df[[blue_col, red_col]],
-        var_name="team", value_name=metric
-    ).replace({blue_col: "Blue", red_col: "Red"})
-    fig_hist = px.histogram(
-        hist_df, x=metric, color="team", barmode="overlay",
-        nbins=bins, color_discrete_map={"Blue": "cornflowerblue", "Red": "indianred"}
-    )
-    fig_hist.update_traces(opacity=0.65)
-    st.plotly_chart(fig_hist, use_container_width=True)
+def page_model_interpret():
+    st.title("Интерпретация Модели")
+    # График SHAP для интерпретации результатов обучения
+    st.write("SHAP-значения для тестовых данных (влияние признаков на предсказания).")
+    shap.summary_plot(shap_values, X_test, show=False)
+    st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
+    fig_shap = px.bar(x=model.feature_importances_, y=features, orientation='h', title="Важность Признаков")
+    fig_shap.update_layout(height=300, width=400)
+    st.plotly_chart(fig_shap, use_container_width=True)
 
-# -------------------------------------------------
-# ПОДВАЛ
-# -------------------------------------------------
-st.markdown("---")
-st.caption("Дашборд: Streamlit + CatBoost + Plotly · Все панели независимы для лучшей интерактивности.")
+# Навигация
+pages = {
+    "Главная": page_home,
+    "Зависимости": page_features_deps,
+    "Распределения": page_distributions,
+    "Модель": page_model_interpret
+}
+
+st.sidebar.title("Навигация")
+selection = st.sidebar.radio("Страницы:", list(pages.keys()))
+page = pages[selection]
+page()
