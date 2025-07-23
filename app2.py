@@ -96,7 +96,7 @@ def page_features_deps():
     with col2:
         # Зависимость признака от таргета
         feat_target = st.selectbox("Признак vs blueWins:", features, index=1)
-        fig_target = px.box(df, x=feat_target, y='blueWins', title=f"{feat_target} по blueWins")
+        fig_target = px.box(df, x='blueWins', y=feat_target, title=f"{feat_target} по blueWins")
         fig_target.update_layout(height=300, width=400)
         st.plotly_chart(fig_target, use_container_width=True)
 
