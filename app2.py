@@ -104,7 +104,6 @@ def page_features_deps():
         st.write("Зависимости выбранного признака и blueWins")
 
 def page_distributions():
-    st.write(f"Точность модели CatBoost: {accuracy:.2%} (на тестовых данных).")
     st.title("Распределения Признаков")
     col1, col2 = st.columns(2)
     
@@ -123,6 +122,7 @@ def page_distributions():
         st.plotly_chart(fig_hist2, use_container_width=True)
 
 def page_model_interpret():
+    st.write(f"Точность модели CatBoost: {accuracy:.2%} (на тестовых данных).")
     st.title("Интерпретация Модели")
     # График SHAP для интерпретации результатов обучения
     st.write("SHAP-значения для тестовых данных (влияние признаков на предсказания).")
