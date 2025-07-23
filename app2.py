@@ -131,7 +131,7 @@ def page_model_interpret():
     st.pyplot(fig)
     
     # Бар важности признаков (без изменений)
-    shap.summary_plot(shap_values, X_test, show=False,plot_type='bar)
+    shap.summary_plot(shap_values, X_test, show=False,plot_type='bar')
     plt.tight_layout()
     st.pyplot(fig)
 
