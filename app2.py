@@ -89,7 +89,7 @@ def page_features_deps():
         # Интерактивный scatter: зависимость двух признаков
         feat1 = st.selectbox("Признак X:", features, index=0)
         feat2 = st.selectbox("Признак Y:", features, index=2)
-        fig_dep = px.scatter(df, x=feat1, y=feat2, color='blueWins', title=f"{feat1} vs {feat2}")
+        fig_dep = px.histogram(df, x=feat1, y=feat2, color='blueWins', title=f"{feat1} vs {feat2}")
         fig_dep.update_layout(height=300, width=400)
         st.plotly_chart(fig_dep, use_container_width=True)
     
