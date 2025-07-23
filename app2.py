@@ -7,10 +7,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
 # Заголовок (замените на ваши данные)
-FIO = "Your_FIO"
-GROUP = "Your_Group"
-VARIANT = "Your_Variant_Number"
-DATASET_NAME = "LoL_Matches"
+FIO = "Нагель Аркадий Михайлович"
+GROUP = "2023-ФГИиИБ-ПИ-1б"
+VARIANT = "16 вариант"
+DATASET_NAME = "LoL"
 st.set_page_config(page_title=f"{FIO}_{GROUP}_{VARIANT}_{DATASET_NAME}")
 
 # Загрузка данных
@@ -46,13 +46,40 @@ model, accuracy, shap_values, X_test = train_model()
 def page_home():
     st.title("Главная: Описание и Точность Модели")
     st.write(f"Точность модели CatBoost: {accuracy:.2%} (на тестовых данных).")
+    st.write(f"В данной работе я работал с датасетом по игре LOL")
+    st.write("""
+    С данными признаками
+    В моем датасете следующие важные признаки
+gameDuration — продолжительность игры в секундах. 
+Целевая переменная: blueWins
+
+Особые первые достижения (флаги): 
+blueFirstBlood, redFirstBlood — первая нанесенная кровь. 
+blueFirstTower, redFirstTower — первая разрушенная башня. 
+blueFirstBaron, redFirstBaron — первый убитый барон. 
+blueFirstDragon, redFirstDragon — первый убитый дракон.
+blueFirstInhibitor, redFirstInhibitor — первый уничтоженный ингибитор ( строение, которое блокирует появление вражеских суперминьонов на этой линии.).
+Количественные показатели команд:
+DragonKills — количество убитых драконов. 
+BaronKills — количество убитых баронов. 
+TowerKills — количество уничтоженных башен.
+ InhibitorKills — количество уничтоженных ингибиторов. 
+WardPlaced — количество поставленных вардингов (тотемов). 
+Wardkills — количество уничтоженных вардингов соперника. 
+Kills — количество убийств вражеских чемпионов. 
+Death — количество смертей. 
+Assist — количество совместных убийств. 
+ChampionDamageDealt — нанесённый урон чемпионам противника. 
+TotalGold — общее количество заработанного золота. 
+TotalMinionKills — количество убитых миньонов. 
+TotalLevel — суммарный уровень всех чемпионов команды. 
+AvgLevel — средний уровень чемпионов команды. 
+JungleMinionKills — количество убитых миньонов в джунглях. 
+KillingSpree — максимальная серия убийств без смерти. 
+TotalHeal — общее количество исцеления. 
+ObjectDamageDealt — урон, нанесённый объектам (например, башням)
+    """)
     
-    # Визуализация точности (бар для accuracy)
-    fig_acc = px.bar(x=['Accuracy'], y=[accuracy], title="Точность Модели", labels={'y': 'Значение'}, range_y=[0,1])
-    fig_acc.update_layout(height=200, width=300, showlegend=False)
-    st.plotly_chart(fig_acc, use_container_width=True)
-    
-    st.write("Перейдите на другие страницы для графиков.")
 
 def page_features_deps():
     st.title("Зависимости Признаков")
@@ -69,7 +96,7 @@ def page_features_deps():
     with col2:
         # Зависимость признака от таргета
         feat_target = st.selectbox("Признак vs blueWins:", features, index=1)
-        fig_target = px.box(df, x='blueWins', y=feat_target, title=f"{feat_target} по blueWins")
+        fig_target = px.box(df, x=feat_target, y=blueWins, title=f"{feat_target} по blueWins")
         fig_target.update_layout(height=300, width=400)
         st.plotly_chart(fig_target, use_container_width=True)
 
@@ -92,6 +119,10 @@ def page_distributions():
         st.plotly_chart(fig_hist2, use_container_width=True)
 
 def page_model_interpret():
+    fig, ax = plt.subplots()
+
+    # Perform your plotting actions on the axes object
+    ax.plot([1, 2, 3], [4, 5, 6])
     st.title("Интерпретация Модели")
     # График SHAP для интерпретации результатов обучения
     st.write("SHAP-значения для тестовых данных (влияние признаков на предсказания).")
