@@ -119,14 +119,17 @@ def page_distributions():
         st.plotly_chart(fig_hist2, use_container_width=True)
 
 def page_model_interpret():
-    #fig, ax = plt.subplots()
-
-    # Perform your plotting actions on the axes object
     st.title("Интерпретация Модели")
     # График SHAP для интерпретации результатов обучения
     st.write("SHAP-значения для тестовых данных (влияние признаков на предсказания).")
-    shap.summary_plot(shap_values, X_test, show=False)
-    st.pyplot(bbox_inches='tight', dpi=300, pad_inches=0)
+    
+    # Исправление: создаем фигуру явно
+    fig, ax = plt.subplots()
+    shap.summary_plot(shap_values, X_test, show=False, ax=ax)
+    plt.tight_layout()
+    st.pyplot(fig)
+    
+    # Бар важности признаков (без изменений)
     fig_shap = px.bar(x=model.feature_importances_, y=features, orientation='h', title="Важность Признаков")
     fig_shap.update_layout(height=300, width=400)
     st.plotly_chart(fig_shap, use_container_width=True)
