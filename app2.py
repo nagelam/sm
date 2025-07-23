@@ -93,6 +93,7 @@ def page_features_deps():
         fig_dep = px.scatter(df, x=feat1, y=feat2, color='blueWins', title=f"{feat1} vs {feat2}")
         fig_dep.update_layout(height=300, width=400)
         st.plotly_chart(fig_dep, use_container_width=True)
+        st.write("Зависимости двух выбранных признаков между собой")
     
     with col2:
         # Зависимость признака от таргета
@@ -100,6 +101,7 @@ def page_features_deps():
         fig_target = px.histogram(df, x=feat_target, y='blueWins', title=f"{feat_target} по blueWins")
         fig_target.update_layout(height=300, width=400)
         st.plotly_chart(fig_target, use_container_width=True)
+        st.write("Зависимости выбранного признака и blueWins")
 
 def page_distributions():
     st.title("Распределения Признаков")
