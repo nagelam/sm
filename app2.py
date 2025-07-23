@@ -126,7 +126,7 @@ def page_model_interpret():
     
     # Исправление: создаем фигуру явно
     fig, ax = plt.subplots()
-    shap.summary_plot(shap_values, X_test, show=False, ax=ax)
+    shap.summary_plot(shap_values, X_test, show=False)
     plt.tight_layout()
     st.pyplot(fig)
     
