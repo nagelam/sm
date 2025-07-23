@@ -131,9 +131,10 @@ def page_model_interpret():
     st.pyplot(fig)
     
     # Бар важности признаков (без изменений)
-    shap.summary_plot(shap_values, X_test, show=False,plot_type='bar')
+    fig2, ax2 = plt.subplots(figsize=(8, 6))
+    shap.summary_plot(shap_values, X_test, plot_type='bar', show=False, ax=ax2)
     plt.tight_layout()
-    st.pyplot(fig)
+    st.pyplot(fig2)
 
 # Навигация
 pages = {
