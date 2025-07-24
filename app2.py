@@ -46,6 +46,10 @@ model, accuracy, shap_values, X_test = train_model()
 # Многостраничная навигация
 def page_home():
     st.title("Главная")
+    df = load_data('./temp.csv')
+    st.header("Обзор набора данных")
+    st.markdown(f"**Размер:** {df.shape[0]} строк × {df.shape[1]} столбцов")
+    st.dataframe(df.head(), use_container_width=True)
     
     st.write(f"В данной работе я работал с датасетом по игре LOL")
     st.write("""
