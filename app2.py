@@ -43,6 +43,19 @@ def train_model():
 
 model, accuracy, shap_values, X_test = train_model()
 
+
+def load_data(path):  
+    try:
+        df = pd.read_csv(path) 
+        return df
+    except FileNotFoundError:
+        st.error(f"Файл не найден: {path}")
+        return pd.DataFrame()  
+    except Exception as e:
+        st.error(f"Ошибка загрузки данных: {e}")
+        return pd.DataFrame()
+
+
 # Многостраничная навигация
 def page_home():
     st.title("Главная")
