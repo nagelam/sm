@@ -13,7 +13,7 @@ GROUP = "2023-ФГИиИБ-ПИ-1б"
 VARIANT = "16 вариант"
 DATASET_NAME = "LoL"
 st.set_page_config(page_title=f"{FIO}_{GROUP}_{VARIANT}_{DATASET_NAME}")
-
+DATA_PATH   = "./temp.csv" 
 # Загрузка данных
 @st.cache_data
 def load_data():
@@ -46,7 +46,7 @@ model, accuracy, shap_values, X_test = train_model()
 # Многостраничная навигация
 def page_home():
     st.title("Главная")
-    df = load_data('./temp.csv')
+    df = load_data(DATA_PATH)
     st.header("Обзор набора данных")
     st.markdown(f"**Размер:** {df.shape[0]} строк × {df.shape[1]} столбцов")
     st.dataframe(df.head(), use_container_width=True)
