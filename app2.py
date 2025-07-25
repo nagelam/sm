@@ -59,6 +59,7 @@ def load_data(path):
 # Многостраничная навигация
 def page_home():
     st.title("Главная")
+    st.subtitle("Нагель Аркадий Михайлович 2023-ФГИиИБ-ПИ-1б 16 вариант датасет LOL")
     df = load_data(DATA_PATH)
     st.header("Обзор набора данных")
     st.markdown(f"**Размер:** {df.shape[0]} строк × {df.shape[1]} столбцов")
